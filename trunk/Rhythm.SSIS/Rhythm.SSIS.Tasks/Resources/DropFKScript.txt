@@ -1,0 +1,2 @@
+SELECT 'ALTER TABLE dbo.'+ STName +' DROP CONSTRAINT '+ FKName AS DropScript, STName AS SourceTableName, FTName AS TargetTableName
+FROM #Temp1

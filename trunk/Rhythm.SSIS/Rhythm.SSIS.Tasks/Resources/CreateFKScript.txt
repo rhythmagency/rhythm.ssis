@@ -1,0 +1,2 @@
+SELECT 'ALTER TABLE [dbo].['+FTName+'] ADD CONSTRAINT ['+FKName+'] FOREIGN KEY ('+FTFields+') REFERENCES ['+STName+'] ('+STFields+') '+FKType AS CreateScript, STName AS SourceTableName, FTName AS TargetTableName
+	FROM #Temp1

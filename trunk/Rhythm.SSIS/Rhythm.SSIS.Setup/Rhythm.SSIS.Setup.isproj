@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Project ToolsVersion="3.5" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<!-- Select a Product Configuration -->
+		<InstallShieldProductConfiguration>Express</InstallShieldProductConfiguration>
+		<!-- Select a Visual Studio Configuration / InstallShield Release -->
+		<Configuration>Debug</Configuration>
+		<InstallShieldRelease>$(Configuration)</InstallShieldRelease>
+	</PropertyGroup>
+	<ItemGroup>
+		<!-- The InstallShieldProject item selects the project to build -->
+		<InstallShieldProject Include="$(MSBuildProjectDirectory)\$(MSBuildProjectName).isl"/>
+		<!-- The InstallShieldReleaseFlags sets Release Flags -->
+		<!--<InstallShieldReleaseFlags Include=""/>-->
+		<!-- The InstallShieldMergeModulePath specifies what directories are
+		searched for Merge Modules -->
+		<!--<InstallShieldMergeModulePath Include=""/>-->
+	</ItemGroup>
+	<ItemGroup>
+		<!-- The ProjectReference items refer to any Visual Studio solutions you want to automatically probe for Project Output Groups.  -->
+	</ItemGroup>
+	<ItemGroup>
+		<!-- The TaggedOutputs items allow you to explicitly add extra files to output groups. Each item must include both Name and OutputGroup, as well as TargetPath metadata values. -->
+		<!--<TaggedOutputs Include="C:\My Test Exe.exe">
+			<Name>My Test Project</Name>
+			<OutputGroup>Primary output</OutputGroup>
+			<TargetPath>My Test Exe.exe</TargetPath>
+		</TaggedOutputs> -->
+	</ItemGroup>
+	<Import Project="$(MSBuildExtensionsPath32)\InstallShield\2013Limited\InstallShield.targets"/>
+	<ItemGroup>
+		<ProjectReference Include="..\3rdParty\sshnet-31793\Renci.SshNet.csproj">
+			<Name>Renci.SshNet</Name>
+			<Project>{2F5F8C90-0BD1-424F-997C-7BC6280919D1}</Project>
+		</ProjectReference>
+		<ProjectReference Include="..\Rhythm.SSIS.Pipeline\Rhythm.SSIS.Pipeline.csproj">
+			<Name>Rhythm.SSIS.Pipeline</Name>
+			<Project>{2CC47671-18C5-4BB4-8DD2-971EB9515598}</Project>
+		</ProjectReference>
+		<ProjectReference Include="..\Rhythm.SSIS.Tasks\Rhythm.SSIS.Tasks.csproj">
+			<Name>Rhythm.SSIS.Tasks</Name>
+			<Project>{A8D20988-31F4-418E-9B71-A21F79B0D48D}</Project>
+		</ProjectReference>
+		<ProjectReference Include="..\Rhythm.SSIS.Tasks.UI\Rhythm.SSIS.Tasks.UI.csproj">
+			<Name>Rhythm.SSIS.Tasks.UI</Name>
+			<Project>{6954B489-B3C9-452B-A00D-B723EB76EC7B}</Project>
+		</ProjectReference>
+	</ItemGroup>
+</Project>

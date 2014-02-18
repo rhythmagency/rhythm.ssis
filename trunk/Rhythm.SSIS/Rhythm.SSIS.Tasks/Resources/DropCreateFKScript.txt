@@ -1,0 +1,118 @@
+	SET NOCOUNT ON;
+
+	DECLARE @FKName NVARCHAR(128)
+	, @FKColumnName NVARCHAR(128)
+	, @PKColumnName NVARCHAR(128)
+	, @fTableName NVARCHAR(128)
+	, @fUpdateRule INT
+	, @fDeleteRule INT
+	, @FieldNames NVARCHAR(500)
+
+
+	CREATE TABLE #Temp(
+		PKTABLE_QUALIFIER NVARCHAR(128),
+		PKTABLE_OWNER NVARCHAR(128),
+		PKTABLE_NAME NVARCHAR(128),
+		PKCOLUMN_NAME NVARCHAR(128),
+		FKTABLE_QUALIFIER NVARCHAR(128),
+		FKTABLE_OWNER NVARCHAR(128),
+		FKTABLE_NAME NVARCHAR(128),
+		FKCOLUMN_NAME NVARCHAR(128),
+		KEY_SEQ INT,
+		UPDATE_RULE INT,
+		DELETE_RULE INT,
+		FK_NAME NVARCHAR(128),
+		PK_NAME NVARCHAR(128),
+		DEFERRABILITY INT)
+
+
+DECLARE TTableNames CURSOR FOR
+	SELECT name
+	FROM sysobjects
+	WHERE xtype = 'U'
+
+	OPEN TTableNames
+
+
+FETCH NEXT FROM TTableNames INTO @fTableName
+
+WHILE @@FETCH_STATUS = 0
+	BEGIN
+		INSERT #Temp
+		EXEC dbo.sp_fkeys @fTableName
+
+		FETCH NEXT FROM TTableNames INTO @fTableName
+	END
+CLOSE TTableNames
+DEALLOCATE TTableNames
+
+
+SET @FieldNames = ''
+SET @fTableName = ''
+
+SELECT DISTINCT FK_NAME AS FKName,FKTABLE_NAME AS FTName,
+@FieldNames AS FTFields,PKTABLE_NAME AS STName,
+@FieldNames AS STFields,@FieldNames AS FKType
+INTO #Temp1
+FROM #Temp
+ORDER BY FK_NAME,FKTABLE_NAME,PKTABLE_NAME
+
+DECLARE FK_CURSOR CURSOR FOR
+	SELECT FKName
+		FROM #Temp1
+		OPEN FK_CURSOR
+	FETCH
+	FROM FK_CURSOR INTO @FKName
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		DECLARE FK_FIELDS_CUSROR CURSOR FOR
+			SELECT FKCOLUMN_NAME,PKCOLUMN_NAME,UPDATE_RULE,DELETE_RULE
+			FROM #TEMP
+			WHERE FK_NAME = @FKName
+			ORDER BY KEY_SEQ
+			OPEN FK_FIELDS_CUSROR
+		FETCH
+			FROM FK_FIELDS_CUSROR INTO @FKColumnName,@PKColumnName,
+			@fUpdateRule,@fDeleteRule
+			WHILE @@FETCH_STATUS = 0
+				BEGIN
+					UPDATE #Temp1 SET FTFields = CASE WHEN LEN(FTFields)
+					= 0 THEN '['+@FKColumnName+']'
+					ELSE FTFields
+					+',['+@FKColumnName+']' END
+					WHERE FKName = @FKName
+					UPDATE #Temp1 SET STFields = CASE WHEN LEN(STFields)
+					= 0 THEN '['+@PKColumnName+']'
+					ELSE STFields
+					+',['+@PKColumnName+']' END
+					WHERE FKName = @FKName
+					FETCH NEXT
+					FROM FK_FIELDS_CUSROR INTO @FKColumnName,@PKColumnName,
+					@fUpdateRule,@fDeleteRule
+					END
+					UPDATE #Temp1 SET FKType = CASE WHEN @fUpdateRule = 0
+					THEN FKType + ' ON UPDATE CASCADE'
+					ELSE FKType END
+					WHERE FKName = @FKName
+					UPDATE #Temp1 SET FKType = CASE WHEN @fDeleteRule = 0
+					THEN FKType + ' ON DELETE CASCADE'
+					ELSE FKType END
+					WHERE FKName = @FKName
+			CLOSE FK_FIELDS_CUSROR
+			DEALLOCATE FK_FIELDS_CUSROR
+		FETCH next
+		FROM FK_CURSOR INTO @FKName
+	END
+	CLOSE FK_CURSOR
+	DEALLOCATE FK_CURSOR
+
+SELECT 'ALTER TABLE dbo.'+ STName +' DROP CONSTRAINT '+ FKName AS DropScript, STName AS SourceTableName, FTName AS ForeignKeyTableName
+FROM #Temp1
+
+SELECT 'ALTER TABLE [dbo].['+FTName+'] ADD CONSTRAINT ['+FKName+'] FOREIGN KEY ('+FTFields+') REFERENCES ['+STName+'] ('+STFields+') '+FKType AS AlterScript, STName AS SourceTableName, FTName AS ForeignKeyTableName
+	FROM #Temp1
+
+DROP TABLE #Temp
+DROP TABLE #Temp1
+
+SET NOCOUNT OFF
